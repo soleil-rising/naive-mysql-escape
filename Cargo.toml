@@ -1,0 +1,15 @@
+[package]
+name = "naive-mysql-escape"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["chrono", "time"]
+chrono = ["dep:chrono"]
+time = ["dep:time"]
+
+[dependencies]
+chrono = { version = "0.4.38", default-features = false, features = ["alloc"], optional = true }
+time = { version = "0.3.37", optional = true }
