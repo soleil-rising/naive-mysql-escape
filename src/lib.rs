@@ -1,6 +1,7 @@
 use std::{
     fmt::{self, Display, Formatter, Write},
     num::Wrapping,
+    ops::Deref,
 };
 
 #[cfg(feature = "chrono")]
@@ -244,21 +245,28 @@ where
     }
 }
 
-pub struct Blob<'a>(&'a [u8]);
+pub struct Blob<T>(pub T);
 
-impl Display for Blob<'_> {
+impl<T> Display for Blob<T>
+where
+    T: Deref<Target = [u8]>,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str("0x")?;
-        for byte in self.0 {
-            write!(f, "{:02X}", byte)?;
+        if self.0.is_empty() {
+            f.write_str("''")
+        } else {
+            f.write_str("0x")?;
+            for byte in &*self.0 {
+                write!(f, "{:02X}", byte)?;
+            }
+            Ok(())
         }
-        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Safe;
+    use crate::{Blob, Safe};
 
     #[test]
     fn test() {
@@ -291,5 +299,20 @@ mod tests {
             Safe([String::from("foo")])
         );
         assert_eq!(sql, "select * from table where column in ('foo')");
+
+        let sql = format!(
+            "select * from table where column = {}",
+            Blob(&[0, 1, 2, 3][..])
+        );
+        assert_eq!(sql, "select * from table where column = 0x00010203");
+
+        let sql = format!("select * from table where column = {}", Blob(&[][..]));
+        assert_eq!(sql, "select * from table where column = ''");
+
+        let sql = format!(
+            "select * from table where column = {}",
+            Blob(vec![0, 1, 2, 3])
+        );
+        assert_eq!(sql, "select * from table where column = 0x00010203");
     }
 }
