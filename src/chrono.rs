@@ -1,6 +1,9 @@
 use std::fmt::{self, Display, Formatter, Write};
 
-use chrono::{format::{Fixed, Item, Numeric, Pad}, TimeZone};
+use chrono::{
+    format::{Fixed, Item, Numeric, Pad},
+    TimeZone,
+};
 
 use super::MySqlLiteral;
 
@@ -20,9 +23,7 @@ const TIME_FORMAT: &[Item<'static>] = &[
     Item::Numeric(Numeric::Second, Pad::Zero),
 ];
 
-const TIME_ZONE_FORMAT: &[Item<'static>] = &[
-    Item::Fixed(Fixed::TimezoneOffsetColon)
-];
+const TIME_ZONE_FORMAT: &[Item<'static>] = &[Item::Fixed(Fixed::TimezoneOffsetColon)];
 
 fn date(f: &mut Formatter<'_>, date: chrono::NaiveDate) -> fmt::Result {
     date.format_with_items(DATE_FORMAT.iter()).fmt(f)
@@ -82,18 +83,27 @@ mod tests {
 
     #[test]
     fn test() {
-        use chrono::{NaiveDate, NaiveTime, NaiveDateTime, Utc};
+        use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
         let date = NaiveDate::from_ymd_opt(1995, 8, 9).unwrap();
         let time = NaiveTime::from_hms_opt(12, 4, 6).unwrap();
         let datetime = NaiveDateTime::new(date, time);
         let utc_datetime = DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc);
-        let jst_datetime = DateTime::<FixedOffset>::from_naive_utc_and_offset(datetime, FixedOffset::east_opt(9 * 3600).unwrap());
+        let jst_datetime = DateTime::<FixedOffset>::from_naive_utc_and_offset(
+            datetime,
+            FixedOffset::east_opt(9 * 3600).unwrap(),
+        );
 
         assert_eq!(Safe(date).to_string(), "'1995-08-09'");
         assert_eq!(Safe(time).to_string(), "'12:04:06'");
         assert_eq!(Safe(datetime).to_string(), "'1995-08-09 12:04:06'");
-        assert_eq!(Safe(utc_datetime).to_string(), "'1995-08-09 12:04:06+00:00'");
-        assert_eq!(Safe(jst_datetime).to_string(), "'1995-08-09 12:04:06+09:00'");
+        assert_eq!(
+            Safe(utc_datetime).to_string(),
+            "'1995-08-09 12:04:06+00:00'"
+        );
+        assert_eq!(
+            Safe(jst_datetime).to_string(),
+            "'1995-08-09 12:04:06+09:00'"
+        );
     }
 }
