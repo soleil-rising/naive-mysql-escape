@@ -63,9 +63,7 @@ impl MySqlLiteral for String {
 impl MySqlLiteral for char {
     fn to_mysql_literal(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_char('\'')?;
-        let mut buf = [0; 4];
-        let s = self.encode_utf8(&mut buf);
-        EscapeStr(s).fmt(f)?;
+        EscapeStr(self.encode_utf8(&mut [0; 4])).fmt(f)?;
         f.write_char('\'')?;
         Ok(())
     }
@@ -204,7 +202,7 @@ where
         if let Some(value) = iter.next() {
             value.to_mysql_literal(f)?;
             for value in iter {
-                f.write_str(", ")?;
+                f.write_char(',')?;
                 value.to_mysql_literal(f)?;
             }
         }
@@ -286,13 +284,13 @@ mod tests {
         assert_eq!(sql, "select * from table where column = 42");
 
         let sql = format!("select * from table where column in ({})", Safe([1, 2, 3]));
-        assert_eq!(sql, "select * from table where column in (1, 2, 3)");
+        assert_eq!(sql, "select * from table where column in (1,2,3)");
 
         let sql = format!(
             "select * from table where column in ({})",
             Safe(["a", "b", "c"])
         );
-        assert_eq!(sql, "select * from table where column in ('a', 'b', 'c')");
+        assert_eq!(sql, "select * from table where column in ('a','b','c')");
 
         let sql = format!(
             "select * from table where column in ({})",
